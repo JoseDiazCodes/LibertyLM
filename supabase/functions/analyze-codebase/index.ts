@@ -1,8 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +13,36 @@ serve(async (req) => {
   }
 
   try {
-    const { sessionId } = await req.json();
+    const body = await req.json();
+    const { sessionId, userApiKeys } = body;
+    
+    // Check for user-provided API keys or fallback to environment
+    const openAIApiKey = userApiKeys?.openai || Deno.env.get('OPENAI_API_KEY');
+    const claudeApiKey = userApiKeys?.claude || Deno.env.get('CLAUDE_API_KEY');
+    
+    // Verify at least one API key is available
+    if (!openAIApiKey && !claudeApiKey) {
+      console.error('No AI API keys found');
+      return new Response(
+        JSON.stringify({ 
+          error: 'No AI API keys configured. Please add your API keys in the settings.' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    if (!sessionId) {
+      return new Response(
+        JSON.stringify({ error: 'Session ID is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -70,29 +97,85 @@ Focus on creating a clear, comprehensive architecture diagram. Use appropriate M
 Return ONLY the Mermaid diagram code, no additional text or explanations.
 `;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are an expert software architect who creates clear, comprehensive Mermaid diagrams for codebase analysis.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000,
-      }),
-    });
+    let mermaidCode;
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+    // Try OpenAI first if available
+    if (openAIApiKey) {
+      console.log('Using OpenAI API...');
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4.1-2025-04-14',
+            messages: [
+              { role: 'system', content: 'You are an expert software architect who creates clear, comprehensive Mermaid diagrams for codebase analysis.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 2000,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          mermaidCode = data.choices[0].message.content.trim();
+        } else {
+          throw new Error(`OpenAI API error: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('OpenAI API failed:', error);
+        if (!claudeApiKey) throw error;
+      }
     }
 
-    const data = await response.json();
-    const mermaidCode = data.choices[0].message.content.trim();
+    // Try Claude if OpenAI failed or is not available
+    if (!mermaidCode && claudeApiKey) {
+      console.log('Using Claude API...');
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${claudeApiKey}`,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 2000,
+            messages: [
+              {
+                role: 'user',
+                content: `You are an expert software architect who creates clear, comprehensive Mermaid diagrams for codebase analysis.\n\n${prompt}`
+              }
+            ],
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          mermaidCode = data.content[0].text.trim();
+        } else {
+          throw new Error(`Claude API error: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('Claude API failed:', error);
+        throw error;
+      }
+    }
+
+    if (!mermaidCode) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate diagram with available AI services' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({ mermaidCode, fileCount: files.length }),

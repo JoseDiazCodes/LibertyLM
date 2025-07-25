@@ -36,10 +36,37 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
       return;
     }
 
+    // Get user API keys from localStorage
+    const savedKeys = localStorage.getItem('user-api-keys');
+    let userApiKeys = null;
+    
+    if (savedKeys) {
+      try {
+        userApiKeys = JSON.parse(savedKeys);
+      } catch (error) {
+        console.error('Error parsing user API keys:', error);
+      }
+    }
+
+    // Check if user has any API keys configured
+    const hasApiKeys = userApiKeys && (userApiKeys.openai || userApiKeys.claude || userApiKeys.google);
+    
+    if (!hasApiKeys) {
+      toast({
+        title: "API Keys Required",
+        description: "Please configure your API keys in the settings to generate diagrams",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-codebase', {
-        body: { sessionId }
+        body: { 
+          sessionId,
+          userApiKeys 
+        }
       });
 
       if (error) throw error;
@@ -53,8 +80,8 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
     } catch (error) {
       console.error('Error generating diagram:', error);
       toast({
-        title: "Error",
-        description: "Failed to generate diagram. Please try again.",
+        title: "Generation Failed",
+        description: "Failed to generate diagram. Please check your API keys and try again.",
         variant: "destructive",
       });
     } finally {

@@ -8,6 +8,7 @@ import { SessionStatus } from '@/components/SessionStatus';
 import { AuthButton } from '@/components/AuthButton';
 import { ChatHistory } from '@/components/ChatHistory';
 import { VisualPlayground } from '@/components/VisualPlayground';
+import { ApiKeyManager } from '@/components/ApiKeyManager';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -331,6 +332,7 @@ const Index = () => {
                         <TabsTrigger value="questions">Questions</TabsTrigger>
                         <TabsTrigger value="history">Chat History</TabsTrigger>
                         <TabsTrigger value="visual">Visual Playground</TabsTrigger>
+                        <TabsTrigger value="settings">API Settings</TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>
@@ -399,10 +401,11 @@ const Index = () => {
                 {/* Right Sidebar - Tabbed Interface */}
                 <div className="lg:col-span-1">
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                       <TabsTrigger value="questions">Questions</TabsTrigger>
                       <TabsTrigger value="history">History</TabsTrigger>
                       <TabsTrigger value="visual">Visual</TabsTrigger>
+                      <TabsTrigger value="settings">Settings</TabsTrigger>
                     </TabsList>
                     <TabsContent value="questions" className="mt-4">
                       <SampleQuestions onQuestionSelect={handleQuestionSelect} />
@@ -414,7 +417,34 @@ const Index = () => {
                         user={user}
                       />
                     </TabsContent>
+                    <TabsContent value="settings" className="mt-4">
+                      <ApiKeyManager />
+                    </TabsContent>
                   </Tabs>
+                </div>
+              </div>
+            )}
+
+            {/* API Settings Full Screen Mode */}
+            {activeTab === 'settings' && (
+              <div className="space-y-6">
+                {/* Prominent Tab Navigation Bar */}
+                <div className="bg-card border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">API Key Settings</h2>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
+                      <TabsList>
+                        <TabsTrigger value="questions">Questions</TabsTrigger>
+                        <TabsTrigger value="history">Chat History</TabsTrigger>
+                        <TabsTrigger value="visual">Visual Playground</TabsTrigger>
+                        <TabsTrigger value="settings">API Settings</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                </div>
+
+                <div className="max-w-2xl mx-auto">
+                  <ApiKeyManager />
                 </div>
               </div>
             )}
