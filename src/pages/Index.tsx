@@ -6,8 +6,10 @@ import { ChatWindow } from '@/components/ChatWindow';
 import { SampleQuestions } from '@/components/SampleQuestions';
 import { SessionStatus } from '@/components/SessionStatus';
 import { AuthButton } from '@/components/AuthButton';
+import { ChatHistory } from '@/components/ChatHistory';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface UploadedFile {
   id: string;
@@ -212,6 +214,61 @@ const Index = () => {
     handleSendMessage(question);
   }, [handleSendMessage]);
 
+  const handleSessionSelect = useCallback(async (selectedSessionId: string) => {
+    if (!user) return;
+
+    try {
+      // Load messages for the selected session
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', selectedSessionId)
+        .order('created_at', { ascending: true });
+
+      if (messagesError) throw messagesError;
+
+      // Load files for the selected session
+      const { data: filesData, error: filesError } = await supabase
+        .from('uploaded_files')
+        .select('*')
+        .eq('session_id', selectedSessionId);
+
+      if (filesError) throw filesError;
+
+      // Convert to frontend format
+      const loadedMessages: Message[] = messagesData.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        role: msg.role as 'user' | 'assistant',
+        timestamp: new Date(msg.created_at)
+      }));
+
+      const loadedFiles: UploadedFile[] = filesData.map(file => ({
+        id: file.id,
+        name: file.file_name,
+        size: file.file_size,
+        type: file.file_type,
+        status: 'success' as const
+      }));
+
+      setSessionId(selectedSessionId);
+      setMessages(loadedMessages);
+      setUploadedFiles(loadedFiles);
+
+      toast({
+        title: "Session loaded",
+        description: "Previous chat session has been loaded",
+      });
+    } catch (error) {
+      console.error('Error loading session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load session",
+        variant: "destructive",
+      });
+    }
+  }, [user, toast]);
+
   const handleClearSession = useCallback(async () => {
     if (!user || !sessionId) return;
 
@@ -289,9 +346,24 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Sidebar - Sample Questions */}
+        {/* Right Sidebar - Tabbed Interface */}
         <div className="lg:col-span-1">
-          <SampleQuestions onQuestionSelect={handleQuestionSelect} />
+          <Tabs defaultValue="questions" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="questions">Questions</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            <TabsContent value="questions" className="mt-4">
+              <SampleQuestions onQuestionSelect={handleQuestionSelect} />
+            </TabsContent>
+            <TabsContent value="history" className="mt-4">
+              <ChatHistory 
+                currentSessionId={sessionId}
+                onSessionSelect={handleSessionSelect}
+                user={user}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
         </>
         )}
