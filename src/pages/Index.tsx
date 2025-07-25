@@ -6,7 +6,6 @@ import { ChatWindow } from '@/components/ChatWindow';
 import { SampleQuestions } from '@/components/SampleQuestions';
 import { SessionStatus } from '@/components/SessionStatus';
 import { AuthButton } from '@/components/AuthButton';
-import { ChatHistory } from '@/components/ChatHistory';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -32,7 +31,6 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [showChatHistory, setShowChatHistory] = useState(false);
   const { toast } = useToast();
 
   // Initialize session and auth
@@ -214,63 +212,6 @@ const Index = () => {
     handleSendMessage(question);
   }, [handleSendMessage]);
 
-  const handleSessionSelect = useCallback(async (selectedSessionId: string) => {
-    setSessionId(selectedSessionId);
-    setMessages([]);
-    setUploadedFiles([]);
-    
-    try {
-      // Load messages for the selected session
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('session_id', selectedSessionId)
-        .order('created_at', { ascending: true });
-
-      if (messagesError) throw messagesError;
-
-      const loadedMessages: Message[] = (messagesData || []).map(msg => ({
-        id: msg.id,
-        content: msg.content,
-        role: msg.role as 'user' | 'assistant',
-        timestamp: new Date(msg.created_at)
-      }));
-
-      setMessages(loadedMessages);
-
-      // Load files for the selected session
-      const { data: filesData, error: filesError } = await supabase
-        .from('uploaded_files')
-        .select('*')
-        .eq('session_id', selectedSessionId);
-
-      if (filesError) throw filesError;
-
-      const loadedFiles: UploadedFile[] = (filesData || []).map(file => ({
-        id: file.id,
-        name: file.file_name,
-        size: file.file_size,
-        type: file.file_type,
-        status: file.status as 'uploading' | 'success' | 'error'
-      }));
-
-      setUploadedFiles(loadedFiles);
-    } catch (error) {
-      console.error('Error loading session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load session data",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  const handleNewSession = useCallback(async () => {
-    setMessages([]);
-    setUploadedFiles([]);
-    await createNewSession();
-  }, []);
-
   const handleClearSession = useCallback(async () => {
     if (!user || !sessionId) return;
 
@@ -308,9 +249,9 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 container mx-auto p-4 flex gap-6 max-w-7xl">
+      <main className="flex-1 container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl">
         {!user && (
-          <div className="flex-1 flex justify-center">
+          <div className="lg:col-span-4 flex justify-center">
             <div className="max-w-md w-full">
               <AuthButton user={user} />
             </div>
@@ -319,53 +260,40 @@ const Index = () => {
         
         {user && (
           <>
-            {/* Chat History Sidebar */}
-            <div className="w-64 flex-shrink-0">
-              <ChatHistory
-                currentSessionId={sessionId}
-                onSessionSelect={handleSessionSelect}
-                onNewSession={handleNewSession}
-                className="h-[calc(100vh-12rem)]"
-              />
-            </div>
+        {/* Left Sidebar - File Upload & Session */}
+        <div className="lg:col-span-1 space-y-6">
+          <SessionStatus
+            sessionId={sessionId}
+            fileCount={uploadedFiles.length}
+            totalSize={totalSize}
+            onClearSession={handleClearSession}
+            isProcessing={isProcessing}
+          />
+          
+          <FileUpload
+            onFilesUploaded={handleFilesUploaded}
+            uploadedFiles={uploadedFiles}
+            onRemoveFile={handleRemoveFile}
+          />
+        </div>
 
-            {/* Main Content */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Left Sidebar - File Upload & Session */}
-              <div className="lg:col-span-1 space-y-6">
-                <SessionStatus
-                  sessionId={sessionId}
-                  fileCount={uploadedFiles.length}
-                  totalSize={totalSize}
-                  onClearSession={handleClearSession}
-                  isProcessing={isProcessing}
-                />
-                
-                <FileUpload
-                  onFilesUploaded={handleFilesUploaded}
-                  uploadedFiles={uploadedFiles}
-                  onRemoveFile={handleRemoveFile}
-                />
-              </div>
+        {/* Center - Chat Window */}
+        <div className="lg:col-span-2 min-h-[600px]">
+          <div className="h-full rounded-lg border bg-card shadow-card">
+            <ChatWindow
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              className="h-full"
+            />
+          </div>
+        </div>
 
-              {/* Center - Chat Window */}
-              <div className="lg:col-span-2 min-h-[600px]">
-                <div className="h-full rounded-lg border bg-card shadow-card">
-                  <ChatWindow
-                    messages={messages}
-                    onSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                    className="h-full"
-                  />
-                </div>
-              </div>
-
-              {/* Right Sidebar - Sample Questions */}
-              <div className="lg:col-span-1">
-                <SampleQuestions onQuestionSelect={handleQuestionSelect} />
-              </div>
-            </div>
-          </>
+        {/* Right Sidebar - Sample Questions */}
+        <div className="lg:col-span-1">
+          <SampleQuestions onQuestionSelect={handleQuestionSelect} />
+        </div>
+        </>
         )}
       </main>
 
