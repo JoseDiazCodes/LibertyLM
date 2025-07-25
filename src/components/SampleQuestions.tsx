@@ -101,7 +101,7 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
   };
 
   return (
-    <Card className={cn("flex flex-col", className)}>
+    <Card className={cn("h-full flex flex-col", className)}>
       {/* Header */}
       <div className="px-3 py-3 sm:px-4 sm:py-4 border-b">
         <Button
@@ -128,7 +128,7 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
 
       {/* Questions List */}
       {!isCollapsed && (
-        <div className="px-2 py-3 sm:px-3 sm:py-4 space-y-2">
+        <div className="flex-1 overflow-y-auto px-2 py-3 sm:px-3 sm:py-4 space-y-2">
           {categories.map((category) => {
             const categoryQuestions = SAMPLE_QUESTIONS.filter(q => q.category === category);
             const isExpanded = expandedCategories.has(category);
