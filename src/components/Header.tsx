@@ -2,6 +2,7 @@
 import React from 'react';
 import { Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface HeaderProps {
   className?: string;
@@ -21,6 +22,9 @@ export function Header({ className }: HeaderProps) {
             <p className="text-sm text-muted-foreground">Upload your codebase and ask questions</p>
           </div>
         </div>
+        
+        {/* Theme Toggle */}
+        <ThemeToggle />
       </div>
     </header>
   );
