@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface SessionStatusProps {
-  sessionId: string;
+  sessionId: string | null;
   fileCount: number;
   totalSize: number;
   onClearSession: () => void;
@@ -59,7 +59,7 @@ export function SessionStatus({
           <Clock className="w-4 h-4 text-muted-foreground" />
           <span className="text-muted-foreground">Session ID:</span>
           <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
-            {formatSessionId(sessionId)}
+            {sessionId ? formatSessionId(sessionId) : 'Not connected'}
           </code>
         </div>
 

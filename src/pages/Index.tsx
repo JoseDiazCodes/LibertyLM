@@ -1,11 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { FileUpload } from '@/components/FileUpload';
 import { ChatWindow } from '@/components/ChatWindow';
 import { SampleQuestions } from '@/components/SampleQuestions';
 import { SessionStatus } from '@/components/SessionStatus';
+import { AuthButton } from '@/components/AuthButton';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UploadedFile {
   id: string;
@@ -27,26 +29,126 @@ const Index = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => Math.random().toString(36).substr(2, 16));
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
 
-  const handleFilesUploaded = useCallback((newFiles: UploadedFile[]) => {
-    setUploadedFiles(prev => [...prev, ...newFiles]);
-    toast({
-      title: "Files uploaded",
-      description: `${newFiles.length} file(s) uploaded successfully`,
+  // Initialize session and auth
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      if (user) {
+        createNewSession();
+      }
     });
-  }, [toast]);
 
-  const handleRemoveFile = useCallback((fileId: string) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
-    toast({
-      title: "File removed",
-      description: "File has been removed from the session",
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+      if (session?.user && !sessionId) {
+        createNewSession();
+      }
     });
-  }, [toast]);
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Create new chat session
+  const createNewSession = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .insert([
+          {
+            user_id: user.id,
+            title: `Session ${new Date().toLocaleDateString()}`
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setSessionId(data.id);
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create chat session",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFilesUploaded = useCallback(async (newFiles: UploadedFile[]) => {
+    if (!user || !sessionId) return;
+
+    try {
+      // Store file metadata in database
+      const fileRecords = newFiles.map(file => ({
+        session_id: sessionId,
+        user_id: user.id,
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.type,
+        storage_path: `${user.id}/${file.id}`,
+        status: file.status
+      }));
+
+      const { error } = await supabase
+        .from('uploaded_files')
+        .insert(fileRecords);
+
+      if (error) throw error;
+
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast({
+        title: "Files uploaded",
+        description: `${newFiles.length} file(s) uploaded successfully`,
+      });
+    } catch (error) {
+      console.error('Error saving files:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save file metadata",
+        variant: "destructive",
+      });
+    }
+  }, [user, sessionId, toast]);
+
+  const handleRemoveFile = useCallback(async (fileId: string) => {
+    if (!user) return;
+
+    try {
+      // Remove from database
+      const { error } = await supabase
+        .from('uploaded_files')
+        .delete()
+        .eq('id', fileId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+      toast({
+        title: "File removed",
+        description: "File has been removed from the session",
+      });
+    } catch (error) {
+      console.error('Error removing file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove file",
+        variant: "destructive",
+      });
+    }
+  }, [user, toast]);
 
   const handleSendMessage = useCallback(async (content: string) => {
+    if (!user || !sessionId) return;
+
     const userMessage: Message = {
       id: Math.random().toString(36).substr(2, 9),
       content,
@@ -58,40 +160,87 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
+      // Save user message to database
+      await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            session_id: sessionId,
+            user_id: user.id,
+            content,
+            role: 'user'
+          }
+        ]);
+
+      // Simulate AI response (your team will replace this with real LLM integration)
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      const aiResponseContent = generateMockResponse(content, uploadedFiles);
       const aiResponse: Message = {
         id: Math.random().toString(36).substr(2, 9),
-        content: generateMockResponse(content, uploadedFiles),
+        content: aiResponseContent,
         role: 'assistant',
         timestamp: new Date()
       };
 
+      // Save AI response to database
+      await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            session_id: sessionId,
+            user_id: user.id,
+            content: aiResponseContent,
+            role: 'assistant'
+          }
+        ]);
+
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
+      console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to get response from AI assistant",
+        description: "Failed to send message",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [uploadedFiles, toast]);
+  }, [user, sessionId, uploadedFiles, toast]);
 
   const handleQuestionSelect = useCallback((question: string) => {
     handleSendMessage(question);
   }, [handleSendMessage]);
 
-  const handleClearSession = useCallback(() => {
-    setUploadedFiles([]);
-    setMessages([]);
-    toast({
-      title: "Session cleared",
-      description: "All files and messages have been cleared",
-    });
-  }, [toast]);
+  const handleClearSession = useCallback(async () => {
+    if (!user || !sessionId) return;
+
+    try {
+      // Delete session (will cascade delete files and messages)
+      await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', sessionId)
+        .eq('user_id', user.id);
+
+      // Create new session
+      setUploadedFiles([]);
+      setMessages([]);
+      await createNewSession();
+      
+      toast({
+        title: "Session cleared",
+        description: "All files and messages have been cleared",
+      });
+    } catch (error) {
+      console.error('Error clearing session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear session",
+        variant: "destructive",
+      });
+    }
+  }, [user, sessionId, toast]);
 
   const totalSize = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
   const isProcessing = uploadedFiles.some(file => file.status === 'uploading');
@@ -101,6 +250,16 @@ const Index = () => {
       <Header />
       
       <main className="flex-1 container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl">
+        {!user && (
+          <div className="lg:col-span-4 flex justify-center">
+            <div className="max-w-md w-full">
+              <AuthButton user={user} />
+            </div>
+          </div>
+        )}
+        
+        {user && (
+          <>
         {/* Left Sidebar - File Upload & Session */}
         <div className="lg:col-span-1 space-y-6">
           <SessionStatus
@@ -134,6 +293,8 @@ const Index = () => {
         <div className="lg:col-span-1">
           <SampleQuestions onQuestionSelect={handleQuestionSelect} />
         </div>
+        </>
+        )}
       </main>
 
       <Footer />
