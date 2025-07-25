@@ -103,24 +103,24 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
   return (
     <Card className={cn("h-full flex flex-col", className)}>
       {/* Header */}
-      <div className="p-4 border-b">
+      <div className="p-3 sm:p-4 border-b">
         <Button
           variant="ghost"
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="w-full justify-between p-0 h-auto hover:bg-transparent"
         >
           <div className="flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-primary" />
-            <span className="font-medium">Sample Questions</span>
+            <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+            <span className="font-medium text-sm sm:text-base">Sample Questions</span>
           </div>
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 flex-shrink-0" />
           ) : (
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-4 h-4 flex-shrink-0" />
           )}
         </Button>
         {!isCollapsed && (
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             Click any question to get started
           </p>
         )}
@@ -128,7 +128,7 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
 
       {/* Questions List */}
       {!isCollapsed && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3">
           {categories.map((category) => {
             const categoryQuestions = SAMPLE_QUESTIONS.filter(q => q.category === category);
             const isExpanded = expandedCategories.has(category);
@@ -138,27 +138,27 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
                 <Button
                   variant="ghost"
                   onClick={() => toggleCategory(category)}
-                  className="w-full justify-between p-2 h-auto hover:bg-accent"
+                  className="w-full justify-between p-2 sm:p-3 h-auto hover:bg-accent rounded-md"
                 >
-                  <span className="font-medium text-sm">{category}</span>
+                  <span className="font-medium text-xs sm:text-sm">{category}</span>
                   {isExpanded ? (
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-3 h-3" />
+                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                   )}
                 </Button>
 
                 {isExpanded && (
-                  <div className="space-y-1 ml-2">
+                  <div className="space-y-1 ml-1 sm:ml-2">
                     {categoryQuestions.map((item) => (
                       <Button
                         key={item.id}
                         variant="ghost"
                         onClick={() => handleQuestionClick(item.question)}
-                        className="w-full justify-start p-3 h-auto text-left hover:bg-accent hover:shadow-sm transition-all duration-200 group"
+                        className="w-full justify-start p-2 sm:p-3 h-auto text-left hover:bg-accent hover:shadow-sm transition-all duration-200 group rounded-md"
                       >
-                        <MessageSquare className="w-3 h-3 mr-2 text-muted-foreground group-hover:text-primary transition-colors" />
-                        <span className="text-sm leading-relaxed">
+                        <MessageSquare className="w-3 h-3 mr-2 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                        <span className="text-xs sm:text-sm leading-relaxed text-left break-words">
                           {item.question}
                         </span>
                       </Button>
@@ -173,10 +173,15 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
 
       {/* Footer */}
       {!isCollapsed && (
-        <div className="p-4 border-t bg-accent/50">
+        <div className="p-3 sm:p-4 border-t bg-accent/30">
           <div className="text-xs text-muted-foreground text-center space-y-1">
-            <p>💡 <strong>Tip:</strong> Upload your files first for better context</p>
-            <p>Ask about specific files, functions, or architectural patterns</p>
+            <p className="break-words">
+              <span className="hidden sm:inline">💡 </span>
+              <strong>Tip:</strong> Upload your files first for better context
+            </p>
+            <p className="break-words hidden sm:block">
+              Ask about specific files, functions, or architectural patterns
+            </p>
           </div>
         </div>
       )}
