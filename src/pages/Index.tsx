@@ -321,40 +321,47 @@ const Index = () => {
           <>
             {/* Visual Playground Full Screen Mode */}
             {activeTab === 'visual' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Compact Left Sidebar */}
-                <div className="lg:col-span-1 space-y-4">
-                  <SessionStatus
-                    sessionId={sessionId}
-                    fileCount={uploadedFiles.length}
-                    totalSize={totalSize}
-                    onClearSession={handleClearSession}
-                    isProcessing={isProcessing}
-                  />
-                  
-                  <FileUpload
-                    onFilesUploaded={handleFilesUploaded}
-                    uploadedFiles={uploadedFiles}
-                    onRemoveFile={handleRemoveFile}
-                  />
-
-                  {/* Tab Navigation */}
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="questions">Questions</TabsTrigger>
-                      <TabsTrigger value="history">History</TabsTrigger>
-                      <TabsTrigger value="visual">Visual</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+              <div className="space-y-6">
+                {/* Prominent Tab Navigation Bar */}
+                <div className="bg-card border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">Visual Architecture Playground</h2>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
+                      <TabsList>
+                        <TabsTrigger value="questions">Questions</TabsTrigger>
+                        <TabsTrigger value="history">Chat History</TabsTrigger>
+                        <TabsTrigger value="visual">Visual Playground</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
                 </div>
 
-                {/* Full Width Visual Playground */}
-                <div className="lg:col-span-4">
-                  <VisualPlayground
-                    sessionId={sessionId}
-                    fileCount={uploadedFiles.length}
-                    user={user}
-                  />
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                  {/* Compact Left Sidebar */}
+                  <div className="lg:col-span-1 space-y-4">
+                    <SessionStatus
+                      sessionId={sessionId}
+                      fileCount={uploadedFiles.length}
+                      totalSize={totalSize}
+                      onClearSession={handleClearSession}
+                      isProcessing={isProcessing}
+                    />
+                    
+                    <FileUpload
+                      onFilesUploaded={handleFilesUploaded}
+                      uploadedFiles={uploadedFiles}
+                      onRemoveFile={handleRemoveFile}
+                    />
+                  </div>
+
+                  {/* Full Width Visual Playground */}
+                  <div className="lg:col-span-4">
+                    <VisualPlayground
+                      sessionId={sessionId}
+                      fileCount={uploadedFiles.length}
+                      user={user}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
