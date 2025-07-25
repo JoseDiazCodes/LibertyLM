@@ -103,7 +103,7 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
   return (
     <Card className={cn("h-full flex flex-col", className)}>
       {/* Header */}
-      <div className="p-3 sm:p-4 border-b">
+      <div className="px-3 py-3 sm:px-4 sm:py-4 border-b">
         <Button
           variant="ghost"
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -128,17 +128,17 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
 
       {/* Questions List */}
       {!isCollapsed && (
-        <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-2 py-3 sm:px-3 sm:py-4 space-y-2">
           {categories.map((category) => {
             const categoryQuestions = SAMPLE_QUESTIONS.filter(q => q.category === category);
             const isExpanded = expandedCategories.has(category);
 
             return (
-              <div key={category} className="space-y-2">
+              <div key={category} className="space-y-1">
                 <Button
                   variant="ghost"
                   onClick={() => toggleCategory(category)}
-                  className="w-full justify-between p-2 sm:p-3 h-auto hover:bg-accent rounded-md"
+                  className="w-full justify-between px-2 py-2 sm:px-3 sm:py-2 h-auto hover:bg-accent rounded-md"
                 >
                   <span className="font-medium text-xs sm:text-sm">{category}</span>
                   {isExpanded ? (
@@ -149,13 +149,13 @@ export function SampleQuestions({ onQuestionSelect, className }: SampleQuestions
                 </Button>
 
                 {isExpanded && (
-                  <div className="space-y-1 ml-1 sm:ml-2">
+                  <div className="space-y-1 pl-3 sm:pl-4">
                     {categoryQuestions.map((item) => (
                       <Button
                         key={item.id}
                         variant="ghost"
                         onClick={() => handleQuestionClick(item.question)}
-                        className="w-full justify-start p-2 sm:p-3 h-auto text-left hover:bg-accent hover:shadow-sm transition-all duration-200 group rounded-md"
+                        className="w-full justify-start px-2 py-2 sm:px-3 sm:py-2 h-auto text-left hover:bg-accent hover:shadow-sm transition-all duration-200 group rounded-md"
                       >
                         <MessageSquare className="w-3 h-3 mr-2 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                         <span className="text-xs sm:text-sm leading-relaxed text-left break-words">
