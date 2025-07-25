@@ -55,13 +55,6 @@ export function SessionStatus({
 
       {/* Session Info */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Session ID:</span>
-          <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
-            {sessionId ? formatSessionId(sessionId) : 'Not connected'}
-          </code>
-        </div>
 
         <div className="flex items-center gap-2 text-sm">
           <Files className="w-4 h-4 text-muted-foreground" />
