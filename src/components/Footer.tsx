@@ -19,7 +19,7 @@ export function Footer({ className }: FooterProps) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Made with</span>
             <Heart className="w-4 h-4 text-red-500" />
-            <span>by Team CodeNavigator</span>
+            <span>by Statue of LiMutations</span>
           </div>
         </div>
         
