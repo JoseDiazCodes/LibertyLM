@@ -34,6 +34,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('questions');
   const { toast } = useToast();
 
   // Initialize session and auth
@@ -307,9 +308,9 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl">
+      <main className="flex-1 container mx-auto p-4 max-w-7xl">
         {!user && (
-          <div className="lg:col-span-4 flex justify-center">
+          <div className="flex justify-center">
             <div className="max-w-md w-full">
               <AuthButton user={user} />
             </div>
@@ -318,63 +319,99 @@ const Index = () => {
         
         {user && (
           <>
-        {/* Left Sidebar - File Upload & Session */}
-        <div className="lg:col-span-1 space-y-6">
-          <SessionStatus
-            sessionId={sessionId}
-            fileCount={uploadedFiles.length}
-            totalSize={totalSize}
-            onClearSession={handleClearSession}
-            isProcessing={isProcessing}
-          />
-          
-          <FileUpload
-            onFilesUploaded={handleFilesUploaded}
-            uploadedFiles={uploadedFiles}
-            onRemoveFile={handleRemoveFile}
-          />
-        </div>
+            {/* Visual Playground Full Screen Mode */}
+            {activeTab === 'visual' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                {/* Compact Left Sidebar */}
+                <div className="lg:col-span-1 space-y-4">
+                  <SessionStatus
+                    sessionId={sessionId}
+                    fileCount={uploadedFiles.length}
+                    totalSize={totalSize}
+                    onClearSession={handleClearSession}
+                    isProcessing={isProcessing}
+                  />
+                  
+                  <FileUpload
+                    onFilesUploaded={handleFilesUploaded}
+                    uploadedFiles={uploadedFiles}
+                    onRemoveFile={handleRemoveFile}
+                  />
 
-        {/* Center - Chat Window */}
-        <div className="lg:col-span-2 min-h-[600px]">
-          <div className="h-full rounded-lg border bg-card shadow-card">
-            <ChatWindow
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              className="h-full"
-            />
-          </div>
-        </div>
+                  {/* Tab Navigation */}
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="questions">Questions</TabsTrigger>
+                      <TabsTrigger value="history">History</TabsTrigger>
+                      <TabsTrigger value="visual">Visual</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
 
-        {/* Right Sidebar - Tabbed Interface */}
-        <div className="lg:col-span-1">
-          <Tabs defaultValue="questions" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="questions">Questions</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-              <TabsTrigger value="visual">Visual</TabsTrigger>
-            </TabsList>
-            <TabsContent value="questions" className="mt-4">
-              <SampleQuestions onQuestionSelect={handleQuestionSelect} />
-            </TabsContent>
-            <TabsContent value="history" className="mt-4">
-              <ChatHistory 
-                currentSessionId={sessionId}
-                onSessionSelect={handleSessionSelect}
-                user={user}
-              />
-            </TabsContent>
-            <TabsContent value="visual" className="mt-4">
-              <VisualPlayground
-                sessionId={sessionId}
-                fileCount={uploadedFiles.length}
-                user={user}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-        </>
+                {/* Full Width Visual Playground */}
+                <div className="lg:col-span-4">
+                  <VisualPlayground
+                    sessionId={sessionId}
+                    fileCount={uploadedFiles.length}
+                    user={user}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Normal 3-Column Layout */
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Left Sidebar - File Upload & Session */}
+                <div className="lg:col-span-1 space-y-6">
+                  <SessionStatus
+                    sessionId={sessionId}
+                    fileCount={uploadedFiles.length}
+                    totalSize={totalSize}
+                    onClearSession={handleClearSession}
+                    isProcessing={isProcessing}
+                  />
+                  
+                  <FileUpload
+                    onFilesUploaded={handleFilesUploaded}
+                    uploadedFiles={uploadedFiles}
+                    onRemoveFile={handleRemoveFile}
+                  />
+                </div>
+
+                {/* Center - Chat Window */}
+                <div className="lg:col-span-2 min-h-[600px]">
+                  <div className="h-full rounded-lg border bg-card shadow-card">
+                    <ChatWindow
+                      messages={messages}
+                      onSendMessage={handleSendMessage}
+                      isLoading={isLoading}
+                      className="h-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Right Sidebar - Tabbed Interface */}
+                <div className="lg:col-span-1">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="questions">Questions</TabsTrigger>
+                      <TabsTrigger value="history">History</TabsTrigger>
+                      <TabsTrigger value="visual">Visual</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="questions" className="mt-4">
+                      <SampleQuestions onQuestionSelect={handleQuestionSelect} />
+                    </TabsContent>
+                    <TabsContent value="history" className="mt-4">
+                      <ChatHistory 
+                        currentSessionId={sessionId}
+                        onSessionSelect={handleSessionSelect}
+                        user={user}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
