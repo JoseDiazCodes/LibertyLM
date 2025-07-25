@@ -7,6 +7,7 @@ import { SampleQuestions } from '@/components/SampleQuestions';
 import { SessionStatus } from '@/components/SessionStatus';
 import { AuthButton } from '@/components/AuthButton';
 import { ChatHistory } from '@/components/ChatHistory';
+import { VisualPlayground } from '@/components/VisualPlayground';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -349,9 +350,10 @@ const Index = () => {
         {/* Right Sidebar - Tabbed Interface */}
         <div className="lg:col-span-1">
           <Tabs defaultValue="questions" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="visual">Visual</TabsTrigger>
             </TabsList>
             <TabsContent value="questions" className="mt-4">
               <SampleQuestions onQuestionSelect={handleQuestionSelect} />
@@ -360,6 +362,13 @@ const Index = () => {
               <ChatHistory 
                 currentSessionId={sessionId}
                 onSessionSelect={handleSessionSelect}
+                user={user}
+              />
+            </TabsContent>
+            <TabsContent value="visual" className="mt-4">
+              <VisualPlayground
+                sessionId={sessionId}
+                fileCount={uploadedFiles.length}
                 user={user}
               />
             </TabsContent>
