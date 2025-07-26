@@ -1,6 +1,60 @@
-# Codebase Analyzer & AI Chat
+<h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 700; margin-bottom: 24px; color: #004E89;">
+  Liberty Mutual TechStart Internship 2025 Hackathon
+</h1>
 
-A powerful web application that helps developers understand and analyze codebases through AI-powered conversations and visual architecture diagrams.
+<div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+  <img src="https://github.com/user-attachments/assets/b0c64796-0d3a-46e3-ae35-ffee062c09d1" alt="InternLaunchpad logo" height="80" style="flex-shrink: 0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+  <h3 style="margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 600; color: #222;">
+    InternLaunchpad
+  </h3>
+</div>
+
+<p style="font-weight: 600; margin-top: 0; margin-bottom: 8px; color: #555;">
+  By the Statue of LiMutations team
+</p>
+
+
+## 🚀 Project Summaries
+
+### InternLaunchpad  
+A onboarding tool that enables developers to upload codebases for intelligent AI-powered analysis. Interns can ask questions, generate visual architecture diagrams, manage sessions, and securely handle API keys with user authentication via Supabase. We aim to help interns quickly ramp-up and understand key processes/information to succeed in their internship.
+
+---
+
+## 🧠 How They Work
+
+### InternLaunchpad Flow
+1. Upload Lucidchart diagrams, PDFs, or docs.  
+2. Ask onboarding questions in chat.  
+3. Files + questions are sent to Gemini AI.  
+4. Receive concise, grounded answers.  
+5. Access a curated playlist of top 3 YouTube videos related to the topic.
+
+### Codebase Analyzer Flow
+1. Authenticate with Supabase or use anonymous mode.  
+2. Upload codebase files (.js, .ts, .py, .cpp, etc.).  
+3. Ask questions to AI models (OpenAI, Claude, Google AI).  
+4. Generate Mermaid architecture diagrams showing component relationships.  
+5. Manage chat sessions and API keys locally for privacy.  
+
+---
+
+## 🧱 Architecture Overview
+
+![Architecture diagram](https://github.com/user-attachments/assets/66eaa7b4-9a1a-4993-add5-01d7edf84ba9)
+
+**Key Components:**
+
+| Component    | InternLaunchpad                              | Codebase Analyzer                        |
+|--------------|---------------------------------------------|----------------------------------------|
+| Frontend     | React, drag-and-drop file upload, chat UI   | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Backend      | Node.js + Express server                     | Supabase (DB, Auth, Storage, Edge Functions) |
+| Storage      | Local filesystem temporary upload folder     | Supabase file storage                   |
+| AI           | Gemini API via Google AI                      | OpenAI GPT, Claude, Google AI APIs     |
+| Authentication | None (InternLaunchpad)                      | Supabase Auth with guest/anonymous mode |
+| Visuals      | None                                         | Mermaid diagrams, Recharts charts      |
+
+---
 
 ## 🚀 Features
 
@@ -258,6 +312,13 @@ This project is open source and available under the MIT License.
 - [ ] Code quality metrics and suggestions
 
 ---
+## 🙌 Team Statue of LiMutations
+
+- Jose Diaz
+- Riyane Fourari
+- Kim Ramirez
+- Eliana Longoria-Valenzuela
+- Emily Flores
 
 Built with ❤️ using React, TypeScript, Supabase, and AI
 
