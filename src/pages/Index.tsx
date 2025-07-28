@@ -10,7 +10,7 @@ import { ChatHistory } from '@/components/ChatHistory';
 import { VisualPlayground } from '@/components/VisualPlayground';
 import { ApiKeyManager } from '@/components/ApiKeyManager';
 import { SecurityDashboard } from '@/components/SecurityDashboard';
-import { ProductionSecurityChecker } from '@/components/ProductionSecurityChecker';
+
 import { useToast } from '@/hooks/use-toast';
 import { useSecurity } from '@/hooks/useSecurity';
 import { supabase } from '@/integrations/supabase/client';
@@ -427,7 +427,6 @@ const Index = () => {
                        <div className="space-y-4">
                          <ApiKeyManager />
                          <SecurityDashboard user={user} />
-                         <ProductionSecurityChecker />
                        </div>
                      </TabsContent>
                   </Tabs>
