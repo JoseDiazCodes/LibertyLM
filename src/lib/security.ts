@@ -257,3 +257,139 @@ export const checkApiKeyAge = (keyName: string): { shouldRotate: boolean; daysOl
 export const markApiKeyCreated = (keyName: string) => {
   localStorage.setItem(`${keyName}_created`, new Date().toISOString());
 };
+
+// Session timeout monitoring
+export class SessionMonitor {
+  private static readonly SESSION_WARNING_TIME = 5 * 60 * 1000; // 5 minutes before timeout
+  private static readonly SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour
+  private static warningShown = false;
+  
+  static startMonitoring(onWarning: () => void, onTimeout: () => void): NodeJS.Timeout {
+    const lastActivity = Date.now();
+    localStorage.setItem('lastActivity', lastActivity.toString());
+    
+    const checkActivity = () => {
+      const stored = localStorage.getItem('lastActivity');
+      if (!stored) return;
+      
+      const timeSinceActivity = Date.now() - parseInt(stored);
+      
+      if (timeSinceActivity > this.SESSION_TIMEOUT) {
+        onTimeout();
+        return;
+      }
+      
+      if (timeSinceActivity > this.SESSION_TIMEOUT - this.SESSION_WARNING_TIME && !this.warningShown) {
+        this.warningShown = true;
+        onWarning();
+      }
+    };
+    
+    // Check every minute
+    return setInterval(checkActivity, 60000);
+  }
+  
+  static updateActivity() {
+    localStorage.setItem('lastActivity', Date.now().toString());
+    this.warningShown = false;
+  }
+  
+  static stopMonitoring(intervalId: NodeJS.Timeout) {
+    clearInterval(intervalId);
+    localStorage.removeItem('lastActivity');
+  }
+}
+
+// Authentication failure monitoring
+export class AuthFailureMonitor {
+  private static readonly MAX_FAILURES = 5;
+  private static readonly LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
+  
+  static recordFailure(identifier: string) {
+    const key = `auth_failures_${identifier}`;
+    const stored = localStorage.getItem(key);
+    const failures = stored ? JSON.parse(stored) : { count: 0, timestamps: [] };
+    
+    failures.count++;
+    failures.timestamps.push(Date.now());
+    failures.lastFailure = Date.now();
+    
+    localStorage.setItem(key, JSON.stringify(failures));
+    
+    logSecurityEvent('authentication_failure', {
+      identifier,
+      failureCount: failures.count,
+      timestamp: Date.now()
+    }, 'warning');
+    
+    if (failures.count >= this.MAX_FAILURES) {
+      logSecurityEvent('authentication_lockout', {
+        identifier,
+        lockoutTime: this.LOCKOUT_TIME,
+        timestamp: Date.now()
+      }, 'error');
+    }
+  }
+  
+  static isLockedOut(identifier: string): boolean {
+    const key = `auth_failures_${identifier}`;
+    const stored = localStorage.getItem(key);
+    if (!stored) return false;
+    
+    const failures = JSON.parse(stored);
+    if (failures.count < this.MAX_FAILURES) return false;
+    
+    const timeSinceLastFailure = Date.now() - failures.lastFailure;
+    return timeSinceLastFailure < this.LOCKOUT_TIME;
+  }
+  
+  static clearFailures(identifier: string) {
+    const key = `auth_failures_${identifier}`;
+    localStorage.removeItem(key);
+  }
+  
+  static getRemainingLockoutTime(identifier: string): number {
+    const key = `auth_failures_${identifier}`;
+    const stored = localStorage.getItem(key);
+    if (!stored) return 0;
+    
+    const failures = JSON.parse(stored);
+    if (failures.count < this.MAX_FAILURES) return 0;
+    
+    const timeSinceLastFailure = Date.now() - failures.lastFailure;
+    return Math.max(0, this.LOCKOUT_TIME - timeSinceLastFailure);
+  }
+}
+
+// Security alert system
+export class SecurityAlerts {
+  static checkForSuspiciousActivity() {
+    const logs = this.getSecurityLogs();
+    const recentLogs = logs.filter(log => Date.now() - log.timestamp < 60000); // Last minute
+    
+    // Check for rapid authentication failures
+    const authFailures = recentLogs.filter(log => log.event === 'authentication_failure');
+    if (authFailures.length > 3) {
+      this.showAlert('Multiple authentication failures detected in the last minute', 'warning');
+    }
+    
+    // Check for unusual API key access patterns
+    const keyAccess = recentLogs.filter(log => log.event === 'api_key_accessed');
+    if (keyAccess.length > 10) {
+      this.showAlert('Unusual API key access pattern detected', 'warning');
+    }
+  }
+  
+  private static getSecurityLogs(): any[] {
+    const stored = localStorage.getItem('security_logs');
+    return stored ? JSON.parse(stored) : [];
+  }
+  
+  private static showAlert(message: string, severity: 'info' | 'warning' | 'error') {
+    // This would integrate with your toast system
+    console.warn(`🚨 Security Alert [${severity.toUpperCase()}]: ${message}`);
+    
+    // Log the alert
+    logSecurityEvent('security_alert', { message, severity }, severity);
+  }
+}

@@ -11,19 +11,24 @@ export const setupCSP = () => {
   const cspMeta = document.createElement('meta');
   cspMeta.setAttribute('http-equiv', 'Content-Security-Policy');
   
-  // Define CSP policy
+  // Define CSP policy with production-ready restrictions
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   const cspPolicy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Required for React and Mermaid
+    isDevelopment 
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" // Development needs eval for hot reload
+      : "script-src 'self' 'unsafe-inline'", // Production removes unsafe-eval
     "style-src 'self' 'unsafe-inline'", // Required for CSS-in-JS and Tailwind
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://*.supabase.co https://api.openai.com https://api.anthropic.com",
+    "connect-src 'self' https://*.supabase.co https://api.openai.com https://api.anthropic.com wss://*.supabase.co",
     "font-src 'self' data:",
     "media-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
     "block-all-mixed-content"
   ].join('; ');
   
@@ -42,5 +47,8 @@ export const logSecurityRecommendations = () => {
     console.log('3. Set X-Frame-Options: DENY');
     console.log('4. Set X-Content-Type-Options: nosniff');
     console.log('5. Review and test all security policies');
+    console.log('6. Configure OTP expiry in Supabase (5-10 minutes recommended)');
+    console.log('7. Enable leaked password protection in Supabase Dashboard');
+    console.log('8. Set proper Site URL and Redirect URLs for authentication');
   }
 };
