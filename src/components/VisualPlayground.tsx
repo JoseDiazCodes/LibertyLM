@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSetInnerHTML, SecureStorage } from '@/lib/security';
 import mermaid from 'mermaid';
 import html2canvas from 'html2canvas';
 
@@ -26,7 +27,7 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
     mermaid.initialize({
       startOnLoad: true,
       theme: 'default',
-      securityLevel: 'loose',
+      securityLevel: 'strict', // Changed to strict for security
       fontFamily: 'inherit',
       fontSize: 14,
       flowchart: {
@@ -61,15 +62,27 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
           
           // Validate and render the diagram
           const { svg } = await mermaid.render(id, mermaidCode);
-          mermaidRef.current!.innerHTML = svg;
+          
+          // Use secure DOM manipulation instead of innerHTML
+          safeSetInnerHTML(mermaidRef.current!, svg);
         } catch (error) {
           console.error('Error rendering Mermaid diagram:', error);
-          mermaidRef.current!.innerHTML = `
-            <div class="text-center p-8 text-red-500">
-              <p class="font-medium">Error rendering diagram</p>
-              <p class="text-sm mt-2">Please check the Mermaid code syntax</p>
-            </div>
-          `;
+          
+          // Create error message safely
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'text-center p-8 text-red-500';
+          
+          const titleP = document.createElement('p');
+          titleP.className = 'font-medium';
+          titleP.textContent = 'Error rendering diagram';
+          
+          const descP = document.createElement('p');
+          descP.className = 'text-sm mt-2';
+          descP.textContent = 'Please check the Mermaid code syntax';
+          
+          errorDiv.appendChild(titleP);
+          errorDiv.appendChild(descP);
+          mermaidRef.current!.appendChild(errorDiv);
         }
       };
 
@@ -96,15 +109,31 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
       return;
     }
 
-    // Get user API keys from localStorage
-    const savedKeys = localStorage.getItem('user-api-keys');
+    // Get user API keys from localStorage (try encrypted first)
     let userApiKeys = null;
     
-    if (savedKeys) {
-      try {
-        userApiKeys = JSON.parse(savedKeys);
-      } catch (error) {
-        console.error('Error parsing user API keys:', error);
+    try {
+      const encryptedKeys = localStorage.getItem('user-api-keys-encrypted');
+      if (encryptedKeys) {
+        const decryptedData = await SecureStorage.decryptData(encryptedKeys);
+        userApiKeys = JSON.parse(decryptedData);
+      } else {
+        // Fallback to unencrypted keys
+        const savedKeys = localStorage.getItem('user-api-keys');
+        if (savedKeys) {
+          userApiKeys = JSON.parse(savedKeys);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+      // Fallback to unencrypted keys
+      const savedKeys = localStorage.getItem('user-api-keys');
+      if (savedKeys) {
+        try {
+          userApiKeys = JSON.parse(savedKeys);
+        } catch (fallbackError) {
+          console.error('Error parsing fallback API keys:', fallbackError);
+        }
       }
     }
 

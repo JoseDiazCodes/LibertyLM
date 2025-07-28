@@ -3,6 +3,8 @@ import { Upload, File, X, Check, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { validateFileType, validateFileSize } from '@/lib/security';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadedFile {
   id: string;
@@ -36,9 +38,25 @@ const ACCEPTED_FILE_TYPES = {
   '.svg': { icon: '🎨', label: 'SVG Image' }
 };
 
+const ALLOWED_MIME_TYPES = [
+  'text/javascript',
+  'text/plain',
+  'application/json',
+  'text/markdown',
+  'image/png',
+  'image/jpeg',
+  'image/svg+xml',
+  'application/x-python-code',
+  'text/x-python',
+  'text/x-java-source'
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export function FileUpload({ onFilesUploaded, uploadedFiles, onRemoveFile, className }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -83,7 +101,45 @@ export function FileUpload({ onFilesUploaded, uploadedFiles, onRemoveFile, class
   const handleFiles = async (files: File[]) => {
     setIsUploading(true);
     
-    const newFiles: UploadedFile[] = files.map(file => ({
+    // Validate files before processing
+    const validFiles: File[] = [];
+    const rejectedFiles: string[] = [];
+    
+    for (const file of files) {
+      // Check file size
+      if (!validateFileSize(file, MAX_FILE_SIZE)) {
+        rejectedFiles.push(`${file.name}: File too large (max 10MB)`);
+        continue;
+      }
+      
+      // Check file type by extension and MIME type
+      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+      const hasValidExtension = extension in ACCEPTED_FILE_TYPES;
+      const hasValidMimeType = ALLOWED_MIME_TYPES.includes(file.type) || file.type === '';
+      
+      if (!hasValidExtension && !hasValidMimeType) {
+        rejectedFiles.push(`${file.name}: Unsupported file type`);
+        continue;
+      }
+      
+      validFiles.push(file);
+    }
+    
+    // Show rejection toast if any files were rejected
+    if (rejectedFiles.length > 0) {
+      toast({
+        title: "Some files were rejected",
+        description: rejectedFiles.slice(0, 3).join(', ') + (rejectedFiles.length > 3 ? '...' : ''),
+        variant: "destructive",
+      });
+    }
+    
+    if (validFiles.length === 0) {
+      setIsUploading(false);
+      return;
+    }
+    
+    const newFiles: UploadedFile[] = validFiles.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: file.size,

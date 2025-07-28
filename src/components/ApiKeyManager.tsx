@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Key, Save, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Key, Save, Trash2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SecureStorage } from '@/lib/security';
 
 interface ApiKeys {
   openai: string;
@@ -29,15 +30,33 @@ export const ApiKeyManager: React.FC = () => {
 
   // Load API keys from localStorage on component mount
   useEffect(() => {
-    const savedKeys = localStorage.getItem('user-api-keys');
-    if (savedKeys) {
-      try {
-        const parsedKeys = JSON.parse(savedKeys);
-        setApiKeys(parsedKeys);
-      } catch (error) {
-        console.error('Error parsing saved API keys:', error);
+    const loadApiKeys = async () => {
+      const encryptedKeys = localStorage.getItem('user-api-keys-encrypted');
+      if (encryptedKeys) {
+        try {
+          const decryptedData = await SecureStorage.decryptData(encryptedKeys);
+          const parsedKeys = JSON.parse(decryptedData);
+          setApiKeys(parsedKeys);
+        } catch (error) {
+          console.error('Error loading encrypted API keys:', error);
+          // Fallback to unencrypted keys for migration
+          const savedKeys = localStorage.getItem('user-api-keys');
+          if (savedKeys) {
+            try {
+              const parsedKeys = JSON.parse(savedKeys);
+              setApiKeys(parsedKeys);
+              // Migrate to encrypted storage
+              await saveEncryptedKeys(parsedKeys);
+              localStorage.removeItem('user-api-keys');
+            } catch (migrationError) {
+              console.error('Error migrating API keys:', migrationError);
+            }
+          }
+        }
       }
-    }
+    };
+    
+    loadApiKeys();
   }, []);
 
   const handleKeyChange = (provider: keyof ApiKeys, value: string) => {
@@ -54,13 +73,35 @@ export const ApiKeyManager: React.FC = () => {
     }));
   };
 
-  const saveApiKeys = () => {
+  const saveEncryptedKeys = async (keys: ApiKeys) => {
     try {
-      localStorage.setItem('user-api-keys', JSON.stringify(apiKeys));
-      toast({
-        title: "API Keys Saved",
-        description: "Your API keys have been saved securely in your browser.",
-      });
+      const encryptedData = await SecureStorage.encryptData(JSON.stringify(keys));
+      localStorage.setItem('user-api-keys-encrypted', encryptedData);
+      return true;
+    } catch (error) {
+      console.error('Encryption failed:', error);
+      return false;
+    }
+  };
+
+  const saveApiKeys = async () => {
+    try {
+      const success = await saveEncryptedKeys(apiKeys);
+      if (success) {
+        // Remove old unencrypted keys if they exist
+        localStorage.removeItem('user-api-keys');
+        toast({
+          title: "API Keys Saved",
+          description: "Your API keys have been encrypted and saved securely in your browser.",
+        });
+      } else {
+        // Fallback to unencrypted storage
+        localStorage.setItem('user-api-keys', JSON.stringify(apiKeys));
+        toast({
+          title: "API Keys Saved",
+          description: "Your API keys have been saved in your browser (encryption failed).",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -77,6 +118,7 @@ export const ApiKeyManager: React.FC = () => {
       google: ''
     });
     localStorage.removeItem('user-api-keys');
+    localStorage.removeItem('user-api-keys-encrypted');
     toast({
       title: "API Keys Cleared",
       description: "All API keys have been removed from your browser.",
@@ -98,9 +140,10 @@ export const ApiKeyManager: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <Alert>
+          <Shield className="h-4 w-4" />
           <AlertDescription>
-            Your API keys are stored locally in your browser and never sent to our servers. 
-            They are only used to make direct requests to the AI providers.
+            Your API keys are encrypted and stored locally in your browser using AES-256-GCM encryption. 
+            They are never sent to our servers and are only used to make direct requests to the AI providers.
           </AlertDescription>
         </Alert>
 
