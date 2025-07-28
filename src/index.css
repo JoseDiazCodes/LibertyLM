@@ -17,35 +17,36 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 210 14% 14%;
 
-    /* Liberty Mutual Primary Blue */
-    --primary: 207 100% 20%;
-    --primary-foreground: 0 0% 100%;
+    /* Liberty Mutual Brand Colors */
+    --primary: 48 100% 50%; /* Liberty Mutual Yellow */
+    --primary-foreground: 222 47% 11%;
     
-    /* Light Blue Accent */
-    --primary-light: 207 75% 85%;
-    --primary-hover: 207 100% 25%;
+    /* Supporting Brand Colors */
+    --primary-light: 48 100% 85%;
+    --primary-hover: 48 100% 45%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 210 14% 14%;
+    --secondary: 207 100% 20%; /* Liberty Mutual Blue */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 210 20% 96%;
     --muted-foreground: 210 8% 46%;
 
-    --accent: 207 75% 95%;
-    --accent-foreground: 207 100% 20%;
+    --accent: 48 100% 95%; /* Soft Yellow Accent */
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 20% 90%;
     --input: 210 20% 96%;
-    --ring: 207 100% 20%;
+    --ring: 48 100% 50%;
     
     /* Custom design tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(207 100% 20%), hsl(207 100% 25%));
-    --gradient-accent: linear-gradient(135deg, hsl(207 75% 95%), hsl(210 20% 96%));
-    --shadow-card: 0 2px 8px -2px hsl(207 100% 20% / 0.1);
-    --shadow-hover: 0 4px 12px -4px hsl(207 100% 20% / 0.15);
+    --gradient-primary: linear-gradient(135deg, hsl(48 100% 50%), hsl(48 100% 45%));
+    --gradient-secondary: linear-gradient(135deg, hsl(207 100% 20%), hsl(207 100% 25%));
+    --gradient-accent: linear-gradient(135deg, hsl(48 100% 95%), hsl(210 20% 96%));
+    --shadow-card: 0 2px 8px -2px hsl(48 100% 50% / 0.1);
+    --shadow-hover: 0 4px 12px -4px hsl(48 100% 50% / 0.15);
     --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
@@ -77,10 +78,10 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 48 100% 60%; /* Brighter yellow for dark mode */
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 207 100% 30%; /* Brighter blue for dark mode */
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
