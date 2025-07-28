@@ -10,6 +10,7 @@ import { ChatHistory } from '@/components/ChatHistory';
 import { VisualPlayground } from '@/components/VisualPlayground';
 import { ApiKeyManager } from '@/components/ApiKeyManager';
 import { useToast } from '@/hooks/use-toast';
+import { useSecurity } from '@/hooks/useSecurity';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -37,6 +38,9 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('questions');
   const { toast } = useToast();
+  
+  // Initialize security monitoring
+  const { updateActivity } = useSecurity();
 
   // Initialize session and auth
   useEffect(() => {

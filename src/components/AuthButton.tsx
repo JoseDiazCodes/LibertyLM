@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSecurity } from '@/hooks/useSecurity';
 
 interface AuthButtonProps {
   user: any;
@@ -10,11 +11,15 @@ interface AuthButtonProps {
 
 export const AuthButton: React.FC<AuthButtonProps> = ({ user }) => {
   const { toast } = useToast();
+  const { updateActivity } = useSecurity();
 
   const signInAsGuest = async () => {
     try {
       const { error } = await supabase.auth.signInAnonymously();
       if (error) throw error;
+      
+      // Update activity on successful authentication
+      updateActivity();
       
       toast({
         title: "Signed in successfully",
