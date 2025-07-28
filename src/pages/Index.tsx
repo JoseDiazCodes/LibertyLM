@@ -9,7 +9,7 @@ import { AuthButton } from '@/components/AuthButton';
 import { ChatHistory } from '@/components/ChatHistory';
 import { VisualPlayground } from '@/components/VisualPlayground';
 import { ApiKeyManager } from '@/components/ApiKeyManager';
-import { SecurityDashboard } from '@/components/SecurityDashboard';
+
 
 import { useToast } from '@/hooks/use-toast';
 import { useSecurity } from '@/hooks/useSecurity';
@@ -424,10 +424,7 @@ const Index = () => {
                       />
                     </TabsContent>
                      <TabsContent value="settings" className="mt-4">
-                       <div className="space-y-4">
-                         <ApiKeyManager />
-                         <SecurityDashboard user={user} />
-                       </div>
+                       <ApiKeyManager />
                      </TabsContent>
                   </Tabs>
                 </div>
