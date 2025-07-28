@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Key, Save, Trash2, Shield } from 'lucide-react';
+import { Eye, EyeOff, Key, Save, Trash2, Shield, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { SecureStorage } from '@/lib/security';
+import { SecureStorage, logSecurityEvent, checkApiKeyAge, markApiKeyCreated } from '@/lib/security';
 
 interface ApiKeys {
   openai: string;
@@ -88,8 +88,16 @@ export const ApiKeyManager: React.FC = () => {
     try {
       const success = await saveEncryptedKeys(apiKeys);
       if (success) {
+        // Mark when keys were created for rotation reminders
+        Object.keys(apiKeys).forEach(key => {
+          if (apiKeys[key as keyof ApiKeys]) {
+            markApiKeyCreated(key);
+          }
+        });
+        
         // Remove old unencrypted keys if they exist
         localStorage.removeItem('user-api-keys');
+        logSecurityEvent('api_keys_saved', { encrypted: true }, 'info');
         toast({
           title: "API Keys Saved",
           description: "Your API keys have been encrypted and saved securely in your browser.",
@@ -97,12 +105,14 @@ export const ApiKeyManager: React.FC = () => {
       } else {
         // Fallback to unencrypted storage
         localStorage.setItem('user-api-keys', JSON.stringify(apiKeys));
+        logSecurityEvent('api_keys_saved', { encrypted: false }, 'warning');
         toast({
           title: "API Keys Saved",
           description: "Your API keys have been saved in your browser (encryption failed).",
         });
       }
     } catch (error) {
+      logSecurityEvent('api_keys_save_failed', { error: error.message }, 'error');
       toast({
         title: "Error",
         description: "Failed to save API keys. Please try again.",
@@ -119,6 +129,11 @@ export const ApiKeyManager: React.FC = () => {
     });
     localStorage.removeItem('user-api-keys');
     localStorage.removeItem('user-api-keys-encrypted');
+    // Clear key creation timestamps
+    ['openai', 'claude', 'google'].forEach(key => {
+      localStorage.removeItem(`${key}_created`);
+    });
+    logSecurityEvent('api_keys_cleared', {}, 'info');
     toast({
       title: "API Keys Cleared",
       description: "All API keys have been removed from your browser.",
@@ -176,6 +191,18 @@ export const ApiKeyManager: React.FC = () => {
                   {showKeys.openai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              {apiKeys.openai && (() => {
+                const { shouldRotate, daysOld } = checkApiKeyAge('openai');
+                if (shouldRotate) {
+                  return (
+                    <div className="flex items-center gap-2 text-amber-600 text-sm">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>API key is {daysOld} days old. Consider rotating for security.</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               <p className="text-sm text-muted-foreground">
                 Get your API key from{' '}
                 <a 
@@ -212,6 +239,18 @@ export const ApiKeyManager: React.FC = () => {
                   {showKeys.claude ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              {apiKeys.claude && (() => {
+                const { shouldRotate, daysOld } = checkApiKeyAge('claude');
+                if (shouldRotate) {
+                  return (
+                    <div className="flex items-center gap-2 text-amber-600 text-sm">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>API key is {daysOld} days old. Consider rotating for security.</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               <p className="text-sm text-muted-foreground">
                 Get your API key from{' '}
                 <a 
@@ -248,6 +287,18 @@ export const ApiKeyManager: React.FC = () => {
                   {showKeys.google ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              {apiKeys.google && (() => {
+                const { shouldRotate, daysOld } = checkApiKeyAge('google');
+                if (shouldRotate) {
+                  return (
+                    <div className="flex items-center gap-2 text-amber-600 text-sm">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>API key is {daysOld} days old. Consider rotating for security.</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               <p className="text-sm text-muted-foreground">
                 Get your API key from{' '}
                 <a 

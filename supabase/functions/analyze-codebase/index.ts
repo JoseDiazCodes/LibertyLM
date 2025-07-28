@@ -110,7 +110,7 @@ Return ONLY the Mermaid diagram code, no additional text or explanations.
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4.1-2025-04-14',
+            model: 'gpt-4o',
             messages: [
               { role: 'system', content: 'You are an expert software architect who creates clear, comprehensive Mermaid diagrams for codebase analysis.' },
               { role: 'user', content: prompt }
@@ -144,7 +144,7 @@ Return ONLY the Mermaid diagram code, no additional text or explanations.
             'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-3-5-sonnet-20241022',
             max_tokens: 2000,
             messages: [
               {

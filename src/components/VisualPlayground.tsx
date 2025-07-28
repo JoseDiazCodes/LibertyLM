@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { safeSetInnerHTML, SecureStorage } from '@/lib/security';
+import { safeSetInnerHTML, SecureStorage, RateLimiter, logSecurityEvent } from '@/lib/security';
 import mermaid from 'mermaid';
 import html2canvas from 'html2canvas';
 
@@ -20,6 +20,7 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
   const [isExporting, setIsExporting] = useState(false);
   const [lastAnalyzed, setLastAnalyzed] = useState<Date | null>(null);
   const mermaidRef = useRef<HTMLDivElement>(null);
+  const rateLimiter = useRef(new RateLimiter(3, 5 * 60 * 1000)); // 3 attempts per 5 minutes
   const { toast } = useToast();
 
   // Initialize Mermaid
@@ -91,6 +92,21 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
   }, [mermaidCode]);
 
   const generateDiagram = async () => {
+    const identifier = user?.id || 'anonymous';
+    
+    // Check rate limiting
+    if (rateLimiter.current.isRateLimited(identifier)) {
+      const timeUntilReset = rateLimiter.current.getTimeUntilReset(identifier);
+      const minutesLeft = Math.ceil(timeUntilReset / (1000 * 60));
+      logSecurityEvent('rate_limit_exceeded', { identifier, minutesLeft }, 'warning');
+      toast({
+        title: "Rate Limit Exceeded",
+        description: `Please wait ${minutesLeft} minutes before generating another diagram.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!sessionId || !user) {
       toast({
         title: "Authentication required",
@@ -149,6 +165,9 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
       return;
     }
 
+    // Record the attempt
+    rateLimiter.current.recordAttempt(identifier);
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-codebase', {
@@ -162,12 +181,14 @@ export function VisualPlayground({ sessionId, fileCount, user }: VisualPlaygroun
 
       setMermaidCode(data.mermaidCode);
       setLastAnalyzed(new Date());
+      logSecurityEvent('diagram_generated', { sessionId, fileCount: data.fileCount }, 'info');
       toast({
         title: "Diagram generated",
         description: `Analyzed ${data.fileCount} files successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating diagram:', error);
+      logSecurityEvent('diagram_generation_error', { error: error.message, sessionId }, 'error');
       toast({
         title: "Generation Failed",
         description: "Failed to generate diagram. Please check your API keys and try again.",

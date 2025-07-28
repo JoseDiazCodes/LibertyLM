@@ -193,4 +193,67 @@ export class RateLimiter {
     attempts.push(now);
     this.attempts.set(identifier, attempts);
   }
+
+  getRemainingAttempts(identifier: string): number {
+    const now = Date.now();
+    const attempts = this.attempts.get(identifier) || [];
+    const validAttempts = attempts.filter(time => now - time < this.windowMs);
+    return Math.max(0, this.maxAttempts - validAttempts.length);
+  }
+
+  getTimeUntilReset(identifier: string): number {
+    const now = Date.now();
+    const attempts = this.attempts.get(identifier) || [];
+    if (attempts.length === 0) return 0;
+    
+    const oldestAttempt = Math.min(...attempts);
+    const resetTime = oldestAttempt + this.windowMs;
+    return Math.max(0, resetTime - now);
+  }
 }
+
+// Security event logging
+export const logSecurityEvent = (event: string, details: any, severity: 'info' | 'warning' | 'error' = 'info') => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    event,
+    details,
+    severity,
+    userAgent: navigator.userAgent,
+    url: window.location.href
+  };
+  
+  console.log(`[SECURITY ${severity.toUpperCase()}]`, logEntry);
+  
+  // Store in localStorage for audit trail (limit to last 100 entries)
+  try {
+    const logs = JSON.parse(localStorage.getItem('security_logs') || '[]');
+    logs.push(logEntry);
+    if (logs.length > 100) logs.shift();
+    localStorage.setItem('security_logs', JSON.stringify(logs));
+  } catch (error) {
+    console.error('Failed to store security log:', error);
+  }
+}
+
+// API key rotation reminder
+export const checkApiKeyAge = (keyName: string): { shouldRotate: boolean; daysOld: number } => {
+  try {
+    const stored = localStorage.getItem(`${keyName}_created`);
+    if (!stored) return { shouldRotate: false, daysOld: 0 };
+    
+    const created = new Date(stored);
+    const now = new Date();
+    const daysOld = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+    const shouldRotate = daysOld > 90; // Recommend rotation after 90 days
+    
+    return { shouldRotate, daysOld };
+  } catch {
+    return { shouldRotate: false, daysOld: 0 };
+  }
+};
+
+export const markApiKeyCreated = (keyName: string) => {
+  localStorage.setItem(`${keyName}_created`, new Date().toISOString());
+};
