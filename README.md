@@ -3,7 +3,12 @@
 </h1>
 
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
-  <img src="https://github.com/user-attachments/assets/b0c64796-0d3a-46e3-ae35-ffee062c09d1" alt="InternLaunchpad logo" height="80" style="flex-shrink: 0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+  <img src="https://github.com/user-attachments/assets/d01685e0-7366-467a-bfe5-843ee024c777" alt![logo1](https://github.com/user-attachments/assets/58f85dbc-75dc-4fad-a2af-94ff86b9e1f7)
+="InternLaunchpad logo" height="120" style="flex-shrink: 0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+
+
+
+
   <h3 style="margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 600; color: #222;">
     InternLaunchpad
   </h3>
@@ -311,6 +316,16 @@ This project is open source and available under the MIT License.
 - [ ] Integration with Git repositories
 - [ ] Code quality metrics and suggestions
 
+## ⚙️ Project Features
+
+✅ Drag-and-drop file upload  
+✅ Chatbox for asking onboarding questions  
+✅ Gemini-powered context-aware answers  
+✅ Temporary file storage with cleanup  
+✅ Simple to deploy, no database or external setup required
+### Extra Feature
+✅ Curated playlist of the top 3 YouTube videos relevant to question's context
+
 ---
 ## 🙌 Team Statue of LiMutations
 
@@ -320,6 +335,8 @@ This project is open source and available under the MIT License.
 - Eliana Longoria-Valenzuela
 - Emily Flores
 
-Built with ❤️ using React, TypeScript, Supabase, and AI
 
 **Lovable Project**: [https://lovable.dev/projects/d49894dd-8b23-4894-a748-1cc85ee6610f](https://lovable.dev/projects/d49894dd-8b23-4894-a748-1cc85ee6610f)
+
+Built with ❤️ using React, TypeScript, Supabase, and AI
+
